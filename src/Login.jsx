@@ -3,28 +3,31 @@ import { useState } from 'react';
 function Login() {
     const [username, setUsername] = useState("");// initialize
     const [password, setPassword] = useState("");// setPassword ile degistirilebilir sadece
-    const [token, setToken] = useState(() => localStorage.getItem("token"));
+    const [loggedIn, setLoggedIn] = useState(false);
     const [note, setNote] = useState("");
 
     async function handleLogin(){// async cunku cevap gelene kadar satir atlamasin diye
         const response = await fetch("http://localhost:8080/login", {
            method:"POST",
            headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({username,password})
         });
-        const data = await response.json();
-        console.log(data);
-        setToken(data.accessToken);
-        localStorage.setItem("token", data.accessToken)
+        if (response.ok) {
+            setLoggedIn(true);
+        }
     }
 
-    function handleLogout() {
-        localStorage.removeItem("token");
-        setToken(null);
+    async function handleLogout() {
+        await fetch("http://localhost:8080/logout", {
+            method: "POST",
+            credentials: "include"
+        });
+        setLoggedIn(false);
     }
 
     return(// her input degisikliginde username veya passwordu degistirecek
-        token ? (
+        loggedIn ? (
             <div>
                 <p>Giris yapildi!</p>
                 <button onClick={handleLogout}>Cikis yap</button>
