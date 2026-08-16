@@ -1,0 +1,345 @@
+/* ---------------------------------------------------------------
+   Login / Dashboard — sadece gorsel katman
+   --------------------------------------------------------------- */
+
+.auth {
+  --auth-bg: #f6f5f9;
+  --auth-bg-2: #eceaf4;
+  --auth-surface: #ffffff;
+  --auth-surface-2: #fafafc;
+  --auth-border: #e4e2ea;
+  --auth-border-strong: #d4d1dd;
+  --auth-text: #14121a;
+  --auth-text-muted: #6b6375;
+  --auth-accent: #7c3aed;
+  --auth-accent-hover: #6d28d9;
+  --auth-accent-soft: rgba(124, 58, 237, 0.1);
+  --auth-ring: rgba(124, 58, 237, 0.22);
+  --auth-success: #16a34a;
+  --auth-success-soft: rgba(22, 163, 74, 0.12);
+  --auth-shadow:
+    0 1px 2px rgba(16, 12, 28, 0.04), 0 12px 32px -12px rgba(16, 12, 28, 0.18);
+
+  --auth-radius: 18px;
+  --auth-radius-sm: 11px;
+
+  box-sizing: border-box;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  text-align: left;
+  color: var(--auth-text);
+  background:
+    radial-gradient(
+      900px 480px at 50% -10%,
+      var(--auth-accent-soft),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--auth-bg), var(--auth-bg-2));
+}
+
+.auth *,
+.auth *::before,
+.auth *::after {
+  box-sizing: border-box;
+}
+
+@media (prefers-color-scheme: dark) {
+  .auth {
+    --auth-bg: #101018;
+    --auth-bg-2: #0b0b11;
+    --auth-surface: #191924;
+    --auth-surface-2: #14141d;
+    --auth-border: #2a2a38;
+    --auth-border-strong: #3a3a4c;
+    --auth-text: #f2f1f6;
+    --auth-text-muted: #9c98ab;
+    --auth-accent: #a78bfa;
+    --auth-accent-hover: #b9a2fb;
+    --auth-accent-soft: rgba(167, 139, 250, 0.14);
+    --auth-ring: rgba(167, 139, 250, 0.28);
+    --auth-success: #4ade80;
+    --auth-success-soft: rgba(74, 222, 128, 0.14);
+    --auth-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.5), 0 16px 40px -16px rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* --- kart -------------------------------------------------------- */
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 36px 32px 32px;
+  background: var(--auth-surface);
+  border: 1px solid var(--auth-border);
+  border-radius: var(--auth-radius);
+  box-shadow: var(--auth-shadow);
+  animation: auth-rise 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.auth-card--wide {
+  max-width: 620px;
+}
+
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-card {
+    animation: none;
+  }
+}
+
+/* --- baslik ------------------------------------------------------ */
+
+.auth-head {
+  margin-bottom: 26px;
+}
+
+.auth-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 18px;
+  border-radius: 13px;
+  font-size: 19px;
+  background: linear-gradient(145deg, var(--auth-accent), #4f46e5);
+  color: #fff;
+  box-shadow: 0 8px 20px -8px var(--auth-accent);
+}
+
+.auth-title {
+  margin: 0 0 6px;
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  color: var(--auth-text);
+}
+
+.auth-subtitle {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--auth-text-muted);
+}
+
+/* --- form -------------------------------------------------------- */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.auth-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--auth-text-muted);
+}
+
+.auth-input,
+.auth-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--auth-text);
+  background: var(--auth-surface-2);
+  border: 1px solid var(--auth-border);
+  border-radius: var(--auth-radius-sm);
+  outline: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.auth-input::placeholder,
+.auth-textarea::placeholder {
+  color: var(--auth-text-muted);
+  opacity: 0.65;
+}
+
+.auth-input:hover,
+.auth-textarea:hover {
+  border-color: var(--auth-border-strong);
+}
+
+.auth-input:focus,
+.auth-textarea:focus {
+  background: var(--auth-surface);
+  border-color: var(--auth-accent);
+  box-shadow: 0 0 0 3px var(--auth-ring);
+}
+
+.auth-textarea {
+  min-height: 110px;
+  resize: vertical;
+  font-family: var(--mono, ui-monospace, Consolas, monospace);
+  font-size: 14px;
+}
+
+/* --- butonlar ---------------------------------------------------- */
+
+.auth-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  border: 1px solid transparent;
+  border-radius: var(--auth-radius-sm);
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.12s ease;
+}
+
+.auth-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--auth-ring);
+}
+
+.auth-btn:active {
+  transform: translateY(1px);
+}
+
+.auth-btn--primary {
+  margin-top: 6px;
+  width: 100%;
+  color: #fff;
+  background: var(--auth-accent);
+  box-shadow: 0 10px 22px -12px var(--auth-accent);
+}
+
+.auth-btn--primary:hover {
+  background: var(--auth-accent-hover);
+}
+
+.auth-btn--ghost {
+  color: var(--auth-text);
+  background: var(--auth-surface-2);
+  border-color: var(--auth-border);
+}
+
+.auth-btn--ghost:hover {
+  border-color: var(--auth-border-strong);
+  background: var(--auth-surface);
+}
+
+/* --- oturum ekrani ----------------------------------------------- */
+
+.auth-session {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 20px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--auth-border);
+}
+
+.auth-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 13px 7px 11px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 999px;
+  color: var(--auth-success);
+  background: var(--auth-success-soft);
+}
+
+.auth-status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px var(--auth-success-soft);
+}
+
+.auth-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-panel + .auth-panel {
+  margin-top: 22px;
+}
+
+.auth-panel-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--auth-text-muted);
+}
+
+.auth-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--auth-text-muted);
+}
+
+.auth-preview {
+  min-height: 96px;
+  padding: 14px 16px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--auth-text);
+  background: var(--auth-surface-2);
+  border: 1px dashed var(--auth-border-strong);
+  border-radius: var(--auth-radius-sm);
+  overflow-wrap: anywhere;
+}
+
+.auth-preview :first-child {
+  margin-top: 0;
+}
+
+.auth-preview :last-child {
+  margin-bottom: 0;
+}
+
+/* --- Vite bolerplate kenarliklarini notrle ----------------------- */
+
+#root:has(.auth) {
+  width: 100%;
+  border-inline: none;
+}
