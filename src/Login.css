@@ -337,6 +337,55 @@
   margin-bottom: 0;
 }
 
+/* --- gecis linki / hata ------------------------------------------ */
+
+.auth-alt {
+  margin: 4px 0 0;
+  font-size: 14px;
+  text-align: center;
+  color: var(--auth-text-muted);
+}
+
+.auth-link {
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--auth-accent);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.auth-link:hover {
+  color: var(--auth-accent-hover);
+  text-decoration: underline;
+}
+
+.auth-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--auth-ring);
+}
+
+.auth-error {
+  margin: 0;
+  padding: 10px 13px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-radius: var(--auth-radius-sm);
+}
+
+@media (prefers-color-scheme: dark) {
+  .auth-error {
+    color: #fca5a5;
+    background: rgba(248, 113, 113, 0.12);
+    border-color: rgba(248, 113, 113, 0.28);
+  }
+}
+
 /* --- Vite bolerplate kenarliklarini notrle ----------------------- */
 
 #root:has(.auth) {

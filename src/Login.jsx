@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './Login.css';
 
-function Login() {
+function Login({ onSwitch }) {
     const [username, setUsername] = useState("");// initialize
     const [password, setPassword] = useState("");// setPassword ile degistirilebilir sadece
     const [loggedIn, setLoggedIn] = useState(false);
@@ -80,6 +80,11 @@ function Login() {
                     />
                   </div>
                   <button className="auth-btn auth-btn--primary" onClick={handleLogin}>Login</button>
+
+                  <p className="auth-alt">
+                    Hesabiniz yok mu?{' '}
+                    <button className="auth-link" type="button" onClick={onSwitch}>Kayit olun</button>
+                  </p>
                 </div>
               </div>
             </div>
