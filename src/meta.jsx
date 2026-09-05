@@ -100,24 +100,19 @@ export const META = {
         ),
       },
     ],
-    gaps: [
-      {
-        code: "A9",
-        body: (
-          <>
-            <b>Listede id yok.</b> <code>NotesResponse</code> sadece <code>icerik</code> tasiyor.
-            Bu yuzden bir nota tiklayip <code>/notes/&#123;id&#125;</code>'ye gidemiyoruz — "Not
-            ac" ekraninda id'yi elle yazmak zorundayiz.
-          </>
-        ),
-      },
-    ],
+    gaps: [],
     tryouts: [
       <>
         Cikis yapip tekrar dene → <b>403</b>. Cookie hala tarayicida ve istekte gidiyor, ama
         Redis kara listesinde.
       </>,
       <>Iki farkli kullaniciyla giris yap → listeler tamamen ayri.</>,
+      <>
+        Her satirda artik gercek <code>id</code>, varsa kucuk bir <b>onizleme</b> ve{" "}
+        <code>imza</code> gorunuyor — <code>NotesResponse</code> artik <code>id</code>,{" "}
+        <code>icerik</code>, <code>imza</code> ve <code>image</code>'i birlikte tasiyor (A9
+        kapandi).
+      </>,
     ],
   },
 
@@ -283,9 +278,11 @@ export const META = {
     gaps: [],
     tryouts: [
       <>
-        Yukle, sonra "Notlarim"a bak — yeni not orada (icerigiyle birlikte). Resim{" "}
-        <code>byte[]</code> olarak Mongo'da saklaniyor ama <code>NotesResponse</code> onu geri
-        donmuyor — kaydediliyor, sadece henuz geri gosterilmiyor.
+        Yukle, sonra "Notlarim"a bak — yeni not orada, icerigi, imzasi ve kucuk bir onizlemesiyle
+        birlikte. Resim <code>byte[]</code> olarak Mongo'da saklaniyor,{" "}
+        <code>NotesResponse</code> onu Jackson'in otomatik cevirdigi bir <b>Base64 string</b>{" "}
+        olarak geri donuyor; ekranda gormek icin ona <code>data:image/png;base64,</code> onekini
+        ekliyoruz.
       </>,
     ],
   },

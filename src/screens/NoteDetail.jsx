@@ -41,8 +41,16 @@ export default function NoteDetail({ run }) {
 
       {note && (
         <article className="note note--full">
-          <span className="note-id">#{id}</span>
-          {note.icerik}
+          <span className="note-id">#{note.id}</span>
+          {note.image && (
+            <img
+              className="note-thumb"
+              src={"data:image/png;base64," + note.image}
+              alt=""
+            />
+          )}
+          <p>{note.icerik}</p>
+          {note.imza && <span className="note-signature">— {note.imza}</span>}
         </article>
       )}
     </div>

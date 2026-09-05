@@ -65,9 +65,18 @@ export default function MyNotes({ run, go }) {
 
       {notes && notes.length > 0 && (
         <ul className="notes">
-          {notes.map((n, i) => (
-            <li key={i} className="note">
-              {n.icerik}
+          {notes.map((n) => (
+            <li key={n.id} className="note">
+              <span className="note-id-inline">#{n.id}</span>
+              {n.image && (
+                <img
+                  className="note-thumb"
+                  src={"data:image/png;base64," + n.image}
+                  alt=""
+                />
+              )}
+              <p>{n.icerik}</p>
+              {n.imza && <span className="note-signature">— {n.imza}</span>}
             </li>
           ))}
         </ul>
