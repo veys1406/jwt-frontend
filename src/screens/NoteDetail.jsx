@@ -15,7 +15,7 @@ export default function NoteDetail({ run }) {
       setNote(res.data);
     } else if (res.status === 403) {
       setMsg("Bu not sana ait degil.");
-    } else if (res.status >= 500) {
+    } else if (res.status === 404) {
       setMsg("Boyle bir not bulunamadi.");
     } else if (res.networkError) {
       setMsg("Sunucuya ulasilamiyor.");

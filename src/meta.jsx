@@ -189,25 +189,33 @@ export const META = {
           </>
         ),
       },
-    ],
-    gaps: [
       {
-        code: "A7",
+        title: "500 degil, 403 cikiyordu — neden?",
         body: (
           <>
-            Var olmayan bir id (orn. 9999) → <b>500</b>.{" "}
-            <code>repo.findById(id).orElseThrow()</code> → <code>NoSuchElementException</code>, ve{" "}
-            <code>GlobalExceptionHandler</code>'da bu tipin karsiligi yok. Olmasi gereken{" "}
-            <b>404</b>.
+            Var olmayan bir id icin beklenen <b>500</b>'du (yakalanmamis{" "}
+            <code>NoSuchElementException</code>), ama gercekte <b>403</b> donuyordu. Sebep
+            IDOR degildi: yakalanmamis exception Spring Boot'u dahili olarak{" "}
+            <code>/error</code>'a forward ettiriyor, bu path <code>permitAll()</code>'da yok, ve{" "}
+            <code>JwtAuthenticationFilter</code> (bir <code>OncePerRequestFilter</code>) bu ERROR
+            dispatch'inde varsayilan olarak <b>tekrar calismiyor</b>. Sonuc: kimlik doğrulama bir
+            daha kurulmuyor, sistem seni anonim saniyor, <code>authenticated()</code> kurali 403
+            ile reddediyor. <code>GlobalExceptionHandler</code>'a duzgun bir handler eklenince bu
+            zincir hic devreye girmiyor — exception artik hic "yakalanmamis" hale gelmiyor.
           </>
         ),
       },
     ],
+    gaps: [],
     tryouts: [
-      <>Iki hesapla dene: A ile not ekle, B ile giris yapip A'nin id'sini iste.</>,
+      <>Iki hesapla dene: A ile not ekle, B ile giris yapip A'nin id'sini iste → 403.</>,
       <>
         Sonra <code>NotesService.getNoteById</code>'deki <code>if</code> blogunu yorum satiri
         yapip tekrar dene. Zafiyet tam olarak boyle bir seydir: eksik bir kontrol.
+      </>,
+      <>
+        Var olmayan bir id dene (orn. 9999) → artik <b>404</b>,{" "}
+        <code>NotFoundException</code> + <code>GlobalExceptionHandler</code> (A7 kapandi).
       </>,
     ],
   },
