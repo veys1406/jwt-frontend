@@ -26,7 +26,7 @@ export default function Account({ run, session, go }) {
   async function renew() {
     setMsg("");
     const res = await run({ method: "POST", path: "/refresh", body: { token: refreshToken } });
-    setMsg(res.ok ? "Yeni token alindi." : "Token yenilenemedi.");
+    setMsg(res.ok && res.data?.message ? res.data.message : "Token yenilenemedi.");
   }
 
   return (

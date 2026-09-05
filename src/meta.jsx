@@ -11,19 +11,22 @@ export const META = {
     auth: false,
     desc: (
       <>
-        Cevap <b>govdesi bos</b> doner. Token body'de degil,
-        <code>Set-Cookie: accessToken=...; HttpOnly; SameSite=Strict</code> header'inda gelir.
-        Ayrica bir refresh token uretilip Redis'e yazilir ama disari hic verilmez.
+        Cevap govdesinde artik sadece kucuk bir <code>{`{ message: "..." }`}</code> var — token
+        orada degil, <code>Set-Cookie: accessToken=...; HttpOnly; SameSite=Strict</code>{" "}
+        header'inda gelir. Ayrica bir refresh token uretilip Redis'e yazilir ama disari hic
+        verilmez.
       </>
     ),
     notes: [
       {
-        title: "Cevap bos, peki giris oldugunu nasil anliyoruz?",
+        title: "Mesaj UX icin, kanit degil",
         body: (
           <>
-            Sadece <code>response.ok</code>'e bakarak. Token'in kendisini goremiyoruz: cookie{" "}
+            <code>message</code> alani sadece kullaniciya gosterilecek bir metin — giris
+            basarisinin gercek kaniti degil. Token'in kendisini hic goremiyoruz: cookie{" "}
             <code>httpOnly</code>. Soldaki uygulamanin JS'i ile bir saldirganin XSS ile
-            calistirdigi JS tarayici acisindan ayni seydir — ikisine de kapali.
+            calistirdigi JS tarayici acisindan ayni seydir — ikisine de kapali. (Onceden bu cevap
+            tamamen bostu, tutarli bir <code>MessageResponse</code> eklendi — K1 kapandi.)
           </>
         ),
       },
@@ -303,10 +306,21 @@ export const META = {
       <>
         <code>/logout</code> access token'i <b>kalan omru kadar</b> Redis'e{" "}
         <code>blacklisted</code> diye yazar. Body'de refresh token gonderilirse o da Redis'ten
-        silinir.
+        silinir. Ikisi de artik kucuk bir <code>{`{ message: "..." }`}</code> donuyor.
       </>
     ),
     notes: [
+      {
+        title: "Refresh artik token'i body'de donmuyor",
+        body: (
+          <>
+            Onceden <code>/refresh</code> ürettigi yeni access token'i <b>ciplak string</b> olarak
+            body'de donuyordu — login'de bilerek kacinilan seyi (token'in JS'in okuyabilecegi bir
+            yere sizmasi) kendisi yapiyordu. Artik login ile ayni yolu izliyor: yeni token{" "}
+            <code>httpOnly</code> cookie'ye yaziliyor, body'de sadece mesaj var (K1 kapandi).
+          </>
+        ),
+      },
       {
         title: "JWT'de cikis diye bir sey yok",
         body: (
