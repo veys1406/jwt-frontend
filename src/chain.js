@@ -64,7 +64,7 @@ export function inferChain(entry, loggedIn) {
       pass("controller", "RefreshRequest bind edildi.");
       return done(
         "service",
-        "AuthService.refresh → InvalidTokenException. Sebep: imza/sure gecersiz, ya type != \"refresh\", ya token Redis'te yok, ya da JSON anahtari yanlis (\"token\" olmali)."
+        "AuthService.refresh → CustomException(401). Sebep: imza/sure gecersiz, ya type != \"refresh\", ya token Redis'te yok, ya da JSON anahtari yanlis (\"token\" olmali)."
       );
     }
     if (loggedIn) {
@@ -72,7 +72,7 @@ export function inferChain(entry, loggedIn) {
       pass("controller", "@AuthenticationPrincipal ile username Service'e verildi.");
       return done(
         "service",
-        "Bu 403 KIMLIKTEN degil, YETKIDEN. NotesService.getNoteById → not baskasinin → AccessDeniedException. Senin IDOR korumandir."
+        "Bu 403 KIMLIKTEN degil, YETKIDEN. NotesService.getNoteById → not baskasinin → CustomException(403). Senin IDOR korumandir."
       );
     }
     return done(
@@ -99,7 +99,7 @@ export function inferChain(entry, loggedIn) {
   pass("controller", "Metot calisti, parametreler bind edildi.");
 
   if (status === 409) {
-    return done("service", "AuthService.register → UserAlreadyExistsException. GlobalExceptionHandler bunu 409'a cevirdi.");
+    return done("service", "AuthService.register → CustomException(409). GlobalExceptionHandler tek metotla (CustomException.getStatus()) bunu cevirdi.");
   }
   if (status >= 500) {
     return done(
