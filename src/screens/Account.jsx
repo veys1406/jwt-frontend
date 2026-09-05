@@ -25,7 +25,9 @@ export default function Account({ run, session, go }) {
 
   async function renew() {
     setMsg("");
-    const res = await run({ method: "POST", path: "/refresh", body: { token: refreshToken } });
+    // refreshToken artik httpOnly bir cookie'de (path=/refresh) — tarayici onu
+    // otomatik gonderiyor, body'ye koymamiza gerek yok (K3 kapandi).
+    const res = await run({ method: "POST", path: "/refresh" });
     setMsg(res.ok && res.data?.message ? res.data.message : "Token yenilenemedi.");
   }
 
@@ -56,18 +58,24 @@ export default function Account({ run, session, go }) {
 
       <div className="advanced">
         <h3 className="preview-title">Oturumu yenile</h3>
-        <label className="field">
-          <span className="field-label">Refresh token</span>
+        <p className="page-sub">
+          Refresh token artik <code>httpOnly</code> bir cookie'de (sadece{" "}
+          <code>/refresh</code>'e gidiyor) — asagidaki kutuya bir sey yazmana gerek yok, buton
+          tek basina calisir.
+        </p>
+        <button className="btn" onClick={renew}>
+          Yenile
+        </button>
+
+        <label className="field" style={{ marginTop: 18 }}>
+          <span className="field-label">Refresh token (sadece cikis testi icin)</span>
           <textarea
             rows={3}
             value={refreshToken}
             onChange={(e) => setRefreshToken(e.target.value)}
-            placeholder="eyJhbGciOiJIUzI1NiJ9..."
+            placeholder="docker exec -it redis redis-cli --scan ile bulup buraya yapistir"
           />
         </label>
-        <button className="btn" onClick={renew} disabled={!refreshToken}>
-          Yenile
-        </button>
       </div>
     </div>
   );

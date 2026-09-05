@@ -305,11 +305,24 @@ export const META = {
     desc: (
       <>
         <code>/logout</code> access token'i <b>kalan omru kadar</b> Redis'e{" "}
-        <code>blacklisted</code> diye yazar. Body'de refresh token gonderilirse o da Redis'ten
-        silinir. Ikisi de artik kucuk bir <code>{`{ message: "..." }`}</code> donuyor.
+        <code>blacklisted</code> diye yazar. <code>/refresh</code> artik refresh token'i body'den
+        degil, kendi <code>httpOnly</code> cookie'sinden okuyor. Ikisi de kucuk bir{" "}
+        <code>{`{ message: "..." }`}</code> donuyor.
       </>
     ),
     notes: [
+      {
+        title: "Iki cookie, iki farkli path",
+        body: (
+          <>
+            <code>login</code> artik iki <code>httpOnly</code> cookie kuruyor:{" "}
+            <code>accessToken</code> (<code>path=/</code>, her istege gidiyor, 30 dk) ve{" "}
+            <code>refreshToken</code> (<code>path=/refresh</code>, <b>sadece</b> o uca gidiyor, 7
+            gun). Boylece daha guclu ve uzun omurlu olan refresh token, gereksiz yere her isteğe
+            binip gitmiyor — maruziyet alani kuculuyor (K3 kapandi).
+          </>
+        ),
+      },
       {
         title: "Refresh artik token'i body'de donmuyor",
         body: (
@@ -343,23 +356,17 @@ export const META = {
     ],
     gaps: [
       {
-        code: "K3",
-        body: (
-          <>
-            <b>Refresh kutusu bos ve sucu sende degil.</b> <code>AuthService.login</code> refresh
-            token'i uretip Redis'e yaziyor ama frontend'e <b>ne cookie'de ne body'de</b>
-            gonderiyor. Elle test icin Redis'ten kopyala:
-            <code className="cmd">docker exec -it redis redis-cli --scan</code>
-          </>
-        ),
-      },
-      {
         code: "tuzak",
         body: (
           <>
-            Giden JSON anahtari <code>token</code> olmali, <code>refreshToken</code> degil.
-            Jackson alan adini field'dan degil <code>getToken()</code> getter'indan turetiyor.
-            Yanlis anahtarda hata olmaz, alan sessizce <code>null</code> kalir.
+            <code>/logout</code>'un body'deki refresh token'i JSON anahtari <code>token</code>{" "}
+            olmali, <code>refreshToken</code> degil (<code>getToken()</code> getter'indan
+            turuyor). Ayrica <code>refreshToken</code> cookie'si artik <code>path=/refresh</code>
+            ile sinirli oldugu icin <b>hicbir zaman</b> <code>/logout</code>'a otomatik
+            gitmiyor — JS de <code>httpOnly</code> oldugu icin degerini okuyup body'ye
+            koyamiyor. Yani gercek kullanimda <code>/logout</code>'un refresh token'i Redis'ten
+            silmesi fiilen imkansiz; asagidaki kutu sadece elle (Redis'ten kopyalayarak) test
+            icin var.
           </>
         ),
       },
@@ -369,6 +376,10 @@ export const META = {
       <>
         Sayfayi yenile (F5) → giris durumu kayboldu ama cookie duruyor. "Oturumu yokla" ile geri
         kur.
+      </>,
+      <>
+        "Oturumu yenile"ye bas (kutuya bir sey yazmadan) → yeni bir <code>accessToken</code>{" "}
+        cookie'si geliyor, tamamen otomatik (K3 kapandi).
       </>,
     ],
   },
