@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { call } from "./api.js";
 import Inspector from "./Inspector.jsx";
 import { META } from "./meta.jsx";
@@ -53,6 +53,22 @@ export default function App() {
       if (name !== undefined) setUsername(name);
     },
   };
+
+  // Sayfa acilinca/yenilenince oturumu backend'e sorup ogreniyoruz (A1).
+  // accessToken httpOnly oldugu icin JS onu okuyamiyor, tek yol backend'e sormak.
+  // Bos dependency dizisi = "sadece ilk render'da bir kez calis".
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    (async () => {
+      const res = await run({ method: "GET", path: "/me" });
+      if (res.ok && res.data) {
+        session.setLoggedIn(true, res.data.username);
+        setActive((current) => (current === "login" ? "mynotes" : current));
+      }
+      // 401 ise loggedIn zaten varsayilan olarak false, hicbir sey yapmiyoruz.
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const Screen = SCREENS[active];
 

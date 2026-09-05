@@ -338,15 +338,6 @@ export const META = {
     ],
     gaps: [
       {
-        code: "A1",
-        body: (
-          <>
-            Sayfa yenilenince oturum kayboluyor. Gereken: yan etkisi olmayan, kullanici adini ve
-            rolu donen bir <code>/me</code> endpoint'i + <code>useEffect</code> icinde bir cagri.
-          </>
-        ),
-      },
-      {
         code: "K3",
         body: (
           <>
