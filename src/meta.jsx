@@ -159,19 +159,7 @@ export const META = {
         ),
       },
     ],
-    gaps: [
-      {
-        code: "A6",
-        body: (
-          <>
-            <b>Imza alani hicbir ise yaramiyor.</b> <code>@RequestParam String imza</code>{" "}
-            zorunlu, gondermezsen 400 alirsin — ama <code>NotesService.createNote</code>{" "}
-            parametreyi aliyor ve hicbir yerde kullanmiyor. Ne entity'ye yaziliyor ne kontrol
-            ediliyor.
-          </>
-        ),
-      },
-    ],
+    gaps: [],
     tryouts: [
       <>
         Imza'yi tamamen sil → <b>400</b>. Istek Controller'a <i>ulasti</i> ama parametre bind
@@ -235,19 +223,20 @@ export const META = {
     auth: true,
     desc: (
       <>
-        Arka planda <code>@Query</code> ile yazilmis bir JPQL calisiyor:
-        <code>WHERE n.ownerUsername = :username AND n.icerik LIKE %:keyword%</code>
+        Arka planda Mongo'nun kendi <code>@Query</code>'si calisiyor — JPQL degil, dogrudan bir
+        JSON filtre: <code>{`{ ownerUsername: ?0, icerik: { $regex: ?1, $options: 'i' } }`}</code>
       </>
     ),
     notes: [
       {
-        title: "Neden injection'a acik degil",
+        title: "Bu sefer 'injection'a acik degil' demiyoruz",
         body: (
           <>
-            <code>:keyword</code> bir <b>named parameter</b>. JPA onu sorgu metnine yapistirmiyor;
-            sorguyu once derliyor, degeri sonra <b>veri olarak</b> bagliyor. Kullanicinin yazdigi
-            sey hicbir zaman SQL olarak okunmuyor. String birlestirmeyle yazsaydin durum bambaska
-            olurdu.
+            JPQL'deki named parameter korumasinin (SQL'e asla string olarak yapismiyordu) burada
+            <b> birebir karsiligi yok.</b> <code>keyword</code>, <code>$regex</code>'in degeri
+            olarak <b>oldugu gibi</b> gidiyor — yani kullanicinin yazdigi sey dogrudan bir regex
+            deseni oluyor. Bu, [[nosql-injection]] notundaki operator injection'dan farkli ama
+            akraba bir risk (C2, hala acik).
           </>
         ),
       },
@@ -255,14 +244,16 @@ export const META = {
     gaps: [],
     tryouts: [
       <>
-        Bos anahtar kelime → <code>LIKE %%</code> → butun notlarin gelir. Filtre degil, "her
+        Bos anahtar kelime → <code>$regex: ''</code> → butun notlarin gelir. Filtre degil, "her
         seyle eslesen" bir desen.
       </>,
       <>
-        <code>%</code> karakterini kendin yaz → joker olarak calisir. Injection degil ama girdi
-        desenin parcasi haline geliyor.
+        <code>.*</code> yaz → yine her sey eslesir, bu sefer bilerek bir regex joker karakteriyle.
       </>,
-      <>Buyuk/kucuk harf degistir → eslesme kaybolur, <code>LIKE</code> harf duyarli.</>,
+      <>
+        Buyuk/kucuk harf degistir → eslesme <b>kaybolmaz</b>. <code>$options: 'i'</code> case-insensitive
+        yapiyor — eski JPQL/H2 davranisiyla ayni sonucu, farkli bir mekanizmayla veriyoruz.
+      </>,
     ],
   },
 
@@ -289,19 +280,14 @@ export const META = {
         ),
       },
     ],
-    gaps: [
-      {
-        code: "A3",
-        body: (
-          <>
-            <b>200 doner ama hicbir sey olmaz.</b> <code>saveNoteWithImage</code> metodunun
-            govdesi bos. Dosya backend'e gercekten ulasiyor, Spring onu{" "}
-            <code>MultipartFile</code>'a parcaliyor, sonra atiyor.
-          </>
-        ),
-      },
+    gaps: [],
+    tryouts: [
+      <>
+        Yukle, sonra "Notlarim"a bak — yeni not orada (icerigiyle birlikte). Resim{" "}
+        <code>byte[]</code> olarak Mongo'da saklaniyor ama <code>NotesResponse</code> onu geri
+        donmuyor — kaydediliyor, sadece henuz geri gosterilmiyor.
+      </>,
     ],
-    tryouts: [<>Yukle, sonra "Notlarim"a bak — yeni bir sey yok. Sessiz basarisizlik.</>],
   },
 
   account: {

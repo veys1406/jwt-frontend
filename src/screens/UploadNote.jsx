@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 export default function UploadNote({ run }) {
+  const [icerik, setIcerik] = useState("");
   const [imza, setImza] = useState("test");
   const [file, setFile] = useState(null);
   const [msg, setMsg] = useState("");
@@ -12,6 +13,7 @@ export default function UploadNote({ run }) {
     setOk(false);
 
     const form = new FormData();
+    form.append("icerik", icerik);
     form.append("imza", imza);
     if (file) form.append("image", file);
 
@@ -34,6 +36,11 @@ export default function UploadNote({ run }) {
       <p className="page-sub">Notuna bir gorsel ekle.</p>
 
       <form className="form" onSubmit={submit}>
+        <label className="field">
+          <span className="field-label">Icerik</span>
+          <textarea rows={4} value={icerik} onChange={(e) => setIcerik(e.target.value)} placeholder="notun metni..." />
+        </label>
+
         <label className="field">
           <span className="field-label">Imza</span>
           <input value={imza} onChange={(e) => setImza(e.target.value)} />
