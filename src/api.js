@@ -5,6 +5,15 @@ export const BASE = "http://localhost:8080";
 
 let counter = 0;
 
+// XSRF-TOKEN cookie'sini okuyoruz (httpOnly degil, bunun icin JS'e acik).
+// Backend'in /csrf endpoint'i bu cookie'yi tetikliyor (bkz. App.jsx).
+function readCsrfCookie() {
+  const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+const CSRF_PROTECTED_METHODS = ["POST", "PUT", "PATCH", "DELETE"];
+
 export async function call({ method, path, query, body, form }) {
   const qs = query ? "?" + new URLSearchParams(query).toString() : "";
   const url = BASE + path + qs;
@@ -19,6 +28,13 @@ export async function call({ method, path, query, body, form }) {
   } else if (body !== undefined) {
     headers["Content-Type"] = "application/json";
     payload = JSON.stringify(body);
+  }
+
+  // CSRF: state degistiren isteklerde cookie'deki token'i header'a kopyalarz.
+  // kotuadam.com bu cookie'yi okuyamadigi icin dogru header'i uretemiyor.
+  if (CSRF_PROTECTED_METHODS.includes(method)) {
+    const csrfToken = readCsrfCookie();
+    if (csrfToken) headers["X-XSRF-TOKEN"] = csrfToken;
   }
 
   const entry = {

@@ -51,6 +51,8 @@ export default function App() {
     setLoggedIn: (value, name) => {
       setLoggedIn(value);
       if (name !== undefined) setUsername(name);
+      // XSRF-TOKEN cookie'si tembel uretiliyor (deferred), bu istek onu tetikliyor.
+      if (value) run({ method: "GET", path: "/csrf" });
     },
   };
 
