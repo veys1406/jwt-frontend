@@ -11,7 +11,7 @@ export default function Login({ run, session, go }) {
     const res = await run({ method: "POST", path: "/login", body: { username, password } });
 
     if (res.ok) {
-      session.setLoggedIn(true, username);
+      await session.setLoggedIn(true, username);
       go("mynotes");
     } else if (res.status === 429) {
       setMsg("Cok fazla deneme yaptiniz. Bir dakika sonra tekrar deneyin.");

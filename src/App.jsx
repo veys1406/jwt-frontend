@@ -48,11 +48,13 @@ export default function App() {
   const session = {
     loggedIn,
     username,
-    setLoggedIn: (value, name) => {
+    setLoggedIn: async (value, name) => {
       setLoggedIn(value);
       if (name !== undefined) setUsername(name);
       // XSRF-TOKEN cookie'si tembel uretiliyor (deferred), bu istek onu tetikliyor.
-      if (value) run({ method: "GET", path: "/csrf" });
+      // await onemli: cookie tarayiciya yazilmadan ekran degisirse ilk POST/PUT/DELETE
+      // CSRF filtresinden 403 doner (bkz. docs/tuzaklar.md).
+      if (value) await run({ method: "GET", path: "/csrf" });
     },
   };
 
@@ -64,7 +66,7 @@ export default function App() {
     (async () => {
       const res = await run({ method: "GET", path: "/me" });
       if (res.ok && res.data) {
-        session.setLoggedIn(true, res.data.username);
+        await session.setLoggedIn(true, res.data.username);
         setActive((current) => (current === "login" ? "mynotes" : current));
       }
       // 401 ise loggedIn zaten varsayilan olarak false, hicbir sey yapmiyoruz.

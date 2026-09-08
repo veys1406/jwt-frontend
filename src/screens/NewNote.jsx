@@ -18,7 +18,7 @@ export default function NewNote({ run, go }) {
     if (res.ok) {
       go("mynotes");
     } else if (res.status === 403) {
-      setMsg("Not kaydetmek icin giris yapmalisin.");
+      setMsg("Kaydedilemedi (403): oturum yok ya da CSRF token henuz hazir degildi. Tekrar dene.");
     } else if (res.status === 400) {
       setMsg("Imza alani bos birakilamaz.");
     } else if (res.networkError) {
