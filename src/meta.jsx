@@ -52,7 +52,9 @@ export const META = {
     desc: (
       <>
         Parola <code>BCryptPasswordEncoder</code> ile hash'lenip saklanir. Rol her zaman{" "}
-        <code>USER</code> — client kendi rolunu secemez, gonderse bile dikkate alinmaz.
+        <code>USER</code> — client kendi rolunu secemez, gonderse bile dikkate alinmaz. Kayit
+        bitince <code>AuthService</code> <code>user.registered</code> exchange'ine bir event
+        birakip <b>beklemeden</b> doner.
       </>
     ),
     notes: [
@@ -67,6 +69,18 @@ export const META = {
           </>
         ),
       },
+      {
+        title: "Cevap geldi = mail gitti degil",
+        body: (
+          <>
+            <code>register</code> 200 dondugunde mail gonderilmis olmak zorunda degil. Yapilan tek
+            sey <code>mail-queue</code>'ya <code>{"{ userMail, username }"}</code> tasiyan bir
+            mesaj birakmak. Mail sunucusu yavassa ya da tamamen coktuyse{" "}
+            <b>kayit yine de basarili olur</b> — event-driven'in var olma sebebi tam olarak bu.
+            Cevap suresini goruyorsun; mailin gidip gitmedigini gormuyorsun.
+          </>
+        ),
+      },
     ],
     gaps: [],
     tryouts: [
@@ -76,6 +90,14 @@ export const META = {
       </>,
       <>
         3 karakterlik parola → <b>400</b>, <code>@Size(min = 6, max = 12)</code>
+      </>,
+      <>
+        Mail alanini bos birak → <b>400</b>, <code>@NotBlank</code> — serit yine{" "}
+        <b>Controller</b>'da durur.
+      </>,
+      <>
+        Basarili kayittan sonra RabbitMQ Management UI (<code>localhost:15672</code>) →{" "}
+        <code>mail-queue</code>. Mesaj birakildi mi, tuketildi mi?
       </>,
     ],
   },

@@ -2,6 +2,7 @@ import { useState } from "react";
 
 export default function Register({ run, go }) {
   const [username, setUsername] = useState("");
+  const [userMail, setUserMail] = useState("");
   const [password, setPassword] = useState("");
   const [again, setAgain] = useState("");
   const [msg, setMsg] = useState("");
@@ -16,14 +17,15 @@ export default function Register({ run, go }) {
       return; // bu kontrol tarayicida, backend'e istek bile gitmiyor
     }
 
-    const res = await run({ method: "POST", path: "/register", body: { username, password } });
+    // userMail backend'de @NotBlank — bos gonderirsek 400, istek Controller'da durur
+    const res = await run({ method: "POST", path: "/register", body: { username, userMail, password } });
 
     if (res.ok) {
       setDone(true);
     } else if (res.status === 409) {
       setMsg("Bu kullanici adi zaten alinmis.");
     } else if (res.status === 400) {
-      setMsg("Parola 6-12 karakter olmali.");
+      setMsg("Alanlari kontrol et: mail bos olamaz, parola 6-12 karakter olmali.");
     } else if (res.networkError) {
       setMsg("Sunucuya ulasilamiyor.");
     } else {
@@ -36,6 +38,11 @@ export default function Register({ run, go }) {
       <div className="page page--narrow">
         <h1 className="page-title">Hesabin hazir</h1>
         <p className="page-sub">Artik giris yapabilirsin.</p>
+        <p className="page-sub">
+          Bu cevap gelene kadar mailden hic soz edilmedi: kayit tamamlaninca backend{" "}
+          <code>mail-queue</code>'ya bir event birakti ve seni beklemeden 200 dondu. Mail o
+          kuyrugu dinleyen tarafta, ayri ve asenkron gidiyor.
+        </p>
         <button className="btn primary block" onClick={() => go("login")}>
           Girise don
         </button>
@@ -52,6 +59,10 @@ export default function Register({ run, go }) {
         <label className="field">
           <span className="field-label">Kullanici adi</span>
           <input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" />
+        </label>
+        <label className="field">
+          <span className="field-label">Mail adresi</span>
+          <input value={userMail} onChange={(e) => setUserMail(e.target.value)} autoComplete="email" />
         </label>
         <label className="field">
           <span className="field-label">Parola</span>
