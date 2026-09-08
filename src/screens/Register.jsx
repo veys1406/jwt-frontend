@@ -43,6 +43,19 @@ export default function Register({ run, go }) {
           <code>mail-queue</code>'ya bir event birakti ve seni beklemeden 200 dondu. Mail o
           kuyrugu dinleyen tarafta, ayri ve asenkron gidiyor.
         </p>
+        <p className="page-sub">
+          Artik gercekten gidiyor: <code>MailConsumer</code> mesaji kuyruktan alip{" "}
+          <code>JavaMailSender</code> ile <b>Mailpit</b>'e (sahte SMTP sunucusu) yolluyor.
+          Gelen kutusu{" "}
+          <a className="link" href="http://localhost:8025" target="_blank" rel="noreferrer">
+            localhost:8025
+          </a>{" "}
+          — bak, mail orada mi.
+        </p>
+        <p className="page-sub">
+          Dikkat: bu ekran o adresi hic bilmiyor. Mail buradan degil, kuyrugun oteki
+          ucundan gitti; tarayici ile mail arasinda hicbir bag yok.
+        </p>
         <button className="btn primary block" onClick={() => go("login")}>
           Girise don
         </button>

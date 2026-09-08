@@ -54,7 +54,9 @@ export const META = {
         Parola <code>BCryptPasswordEncoder</code> ile hash'lenip saklanir. Rol her zaman{" "}
         <code>USER</code> — client kendi rolunu secemez, gonderse bile dikkate alinmaz. Kayit
         bitince <code>AuthService</code> <code>user.registered</code> exchange'ine bir event
-        birakip <b>beklemeden</b> doner.
+        birakip <b>beklemeden</b> doner. Kuyrugun oteki ucunda <code>MailConsumer</code> o
+        mesaji alip <code>JavaMailSender</code> ile gercek bir mail yolluyor — sahte SMTP
+        sunucusu <b>Mailpit</b>'e.
       </>
     ),
     notes: [
@@ -66,6 +68,30 @@ export const META = {
             istek butun filter'lari gecti, is kuralina takildi. Uc karakterlik parola ise{" "}
             <b>400</b> verir ve serit <b>Controller</b>'da durur — Service hic calismadi. Ikisi de
             "hata" ama tamamen baska yerler.
+          </>
+        ),
+      },
+      {
+        title: "Bu tek tikta dort ayri program var",
+        body: (
+          <>
+            Tarayici → Spring: <b>HTTP</b>. Spring → RabbitMQ: <b>AMQP</b> (port 5672).
+            Spring → Mailpit: <b>SMTP</b> (port 1025). Ucu de ayri konteynerde calisan ayri
+            programlar; aralarindaki her sinirda nesne <code>byte[]</code>'a cevrilip karsi
+            tarafta yeniden kuruluyor. Kuyruga giderken bu ceviri JSON — mesajin ustundeki{" "}
+            <code>__TypeId__</code> header'i hangi class'a donusecegini soyluyor, ve o header
+            beyaz listeye tabi.
+          </>
+        ),
+      },
+      {
+        title: "Mailpit neden iki port aciyor",
+        body: (
+          <>
+            <code>1025</code> SMTP, <code>8025</code> HTTP. Cunku SMTP tek yonlu: sadece mail{" "}
+            <b>teslim eder</b>, "gelen kutumu goster" diye bir komutu yoktur (o is IMAP/POP3'un).
+            Mailpit de aldiklarini gosterebilmek icin ikinci bir sunucu, bir web arayuzu
+            calistiriyor. Spring'in bagladigi port 1025; senin baktigin adres 8025.
           </>
         ),
       },
@@ -98,6 +124,18 @@ export const META = {
       <>
         Basarili kayittan sonra RabbitMQ Management UI (<code>localhost:15672</code>) →{" "}
         <code>mail-queue</code>. Mesaj birakildi mi, tuketildi mi?
+      </>,
+      <>
+        Kayit ol, sonra{" "}
+        <a className="link" href="http://localhost:8025" target="_blank" rel="noreferrer">
+          localhost:8025
+        </a>{" "}
+        → mail orada. Girdigin mail adresi ne ise alici o.
+      </>,
+      <>
+        Asil deney: <code>docker compose stop mailpit</code> → kayit ol. Cevap yine{" "}
+        <b>200</b> gelir, kullanici olusur, ama mail yok. Kayit ile mail birbirine bagli
+        degil — event-driven'in butun mesele bu.
       </>,
     ],
   },
