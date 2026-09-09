@@ -17,7 +17,8 @@ export default function Register({ run, go }) {
       return; // bu kontrol tarayicida, backend'e istek bile gitmiyor
     }
 
-    // userMail backend'de @NotBlank — bos gonderirsek 400, istek Controller'da durur
+    // userMail backend'de @NotBlank + @Email — bos ya da bozuk formatta gonderirsek 400,
+    // istek Controller'da durur ve kuyruga hic mesaj birakilmaz
     const res = await run({ method: "POST", path: "/register", body: { username, userMail, password } });
 
     if (res.ok) {
@@ -25,7 +26,7 @@ export default function Register({ run, go }) {
     } else if (res.status === 409) {
       setMsg("Bu kullanici adi zaten alinmis.");
     } else if (res.status === 400) {
-      setMsg("Alanlari kontrol et: mail bos olamaz, parola 6-12 karakter olmali.");
+      setMsg("Alanlari kontrol et: mail adresi gecerli olmali, parola 6-12 karakter olmali.");
     } else if (res.networkError) {
       setMsg("Sunucuya ulasilamiyor.");
     } else {
@@ -55,6 +56,12 @@ export default function Register({ run, go }) {
         <p className="page-sub">
           Dikkat: bu ekran o adresi hic bilmiyor. Mail buradan degil, kuyrugun oteki
           ucundan gitti; tarayici ile mail arasinda hicbir bag yok.
+        </p>
+        <p className="page-sub">
+          Peki mail gidemezse? Consumer 5 saniye arayla <b>3 kez</b> deniyor; ucu de
+          basarisiz olursa mesaj silinmiyor, <code>garbage-queue</code> adli ayri bir
+          kuyruga tasiniyor ve orada bekliyor. Yani "mail gitmedi" ile "mail kayboldu"
+          ayni sey degil — sen bu ekrani gorurken mesajin akibeti hala belirsiz olabilir.
         </p>
         <button className="btn primary block" onClick={() => go("login")}>
           Girise don

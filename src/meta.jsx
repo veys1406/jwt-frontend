@@ -56,7 +56,8 @@ export const META = {
         bitince <code>AuthService</code> <code>user.registered</code> exchange'ine bir event
         birakip <b>beklemeden</b> doner. Kuyrugun oteki ucunda <code>MailConsumer</code> o
         mesaji alip <code>JavaMailSender</code> ile gercek bir mail yolluyor — sahte SMTP
-        sunucusu <b>Mailpit</b>'e.
+        sunucusu <b>Mailpit</b>'e. Gonderim patlarsa mesaj kaybolmuyor: 3 deneme sonunda{" "}
+        <code>garbage-queue</code>'ya tasiniyor.
       </>
     ),
     notes: [
@@ -107,6 +108,40 @@ export const META = {
           </>
         ),
       },
+      {
+        title: "Mail gidemezse mesaj nereye gidiyor",
+        body: (
+          <>
+            Consumer patlayinca RabbitMQ mesaji silmez — silmesi icin consumer'in "bitirdim"
+            demesi (<b>ack</b>) gerekir. Patlayan consumer ack vermez, mesaj{" "}
+            <b>Unacked</b> durumunda kalir. Varsayilan davranis onu kuyruga geri koymak, ki
+            bu tek basina <b>sonsuz dongu</b> demek: patla, geri koy, tekrar dene.
+            <br />
+            Bizde zincir su: 5 saniye arayla <b>3 deneme</b> (uygulamanin icinde, mesaj
+            kuyruga hic donmeden) → haklar bitince mesaj reddedilir → <code>mail-queue</code>
+            'nun <code>x-dead-letter-exchange</code> ayari devreye girer →{" "}
+            <code>message.rejected</code> exchange'i → <code>garbage-queue</code>. Orada
+            kimse tuketmez, mesaj incelenmek uzere <b>durur</b>.
+          </>
+        ),
+      },
+      {
+        title: "Gecici hata mi, kalici hata mi",
+        body: (
+          <>
+            Mailpit kapali olmasi <b>gecici</b> bir hata: mesaj saglam, sunucu acilinca ayni
+            mesaj gider. Tekrar denemek mantikli. Ama <code>userMail</code> alani{" "}
+            <code>"sad2qw"</code> ise bu <b>kalici</b>: kac kere denersen dene bir mail
+            adresine donusmez. Ikisine ayni tepkiyi vermek 15 saniye bosa yakmak demek.
+            <br />
+            Bu yuzden kalici hata iki yerde yakalaniyor: <code>@Email</code> ile{" "}
+            <b>kapida</b> (istek 400 doner, kuyruga mesaj hic girmez) ve{" "}
+            <code>MailConsumer</code>'da ikinci bir kontrolle. Hata ne kadar erken
+            yakalanirsa o kadar ucuz — kapida yakalarsan kullaniciya soyleyebilirsin,
+            kuyrukta yakalarsan soyleyemezsin.
+          </>
+        ),
+      },
     ],
     gaps: [],
     tryouts: [
@@ -120,6 +155,12 @@ export const META = {
       <>
         Mail alanini bos birak → <b>400</b>, <code>@NotBlank</code> — serit yine{" "}
         <b>Controller</b>'da durur.
+      </>,
+      <>
+        Mail alanina <code>bozukadres</code> yaz → <b>400</b>, <code>@Email</code>. Sonra{" "}
+        <code>a@b</code> dene → <b>gecer</b>. <code>@Email</code> sadece <i>sekle</i> bakar;
+        adresin var olup olmadigini hicbir regex bilemez, onun tek kaniti o adrese gonderilen
+        bir dogrulama maili.
       </>,
       <>
         Basarili kayittan sonra RabbitMQ Management UI (<code>localhost:15672</code>) →{" "}
@@ -136,6 +177,25 @@ export const META = {
         Asil deney: <code>docker compose stop mailpit</code> → kayit ol. Cevap yine{" "}
         <b>200</b> gelir, kullanici olusur, ama mail yok. Kayit ile mail birbirine bagli
         degil — event-driven'in butun mesele bu.
+      </>,
+      <>
+        Ayni deneyin devami: Management UI'da <code>mail-queue</code> satirini izle. Mesaj{" "}
+        <b>Ready</b>'de degil <b>Unacked</b>'da bekler (teslim edildi ama onaylanmadi).
+        10 saniye sonra <code>garbage-queue</code>'da <b>Ready 1</b> olur. App loglarinda o
+        an <code>OwnRecoverer</code>'in ERROR satiri gorunur.
+      </>,
+      <>
+        <code>garbage-queue</code> → Get messages → mesajin header'larindaki{" "}
+        <code>x-death</code>'e bak: <code>exchange</code>, <code>queue</code>,{" "}
+        <code>reason</code>, <code>routing-keys</code>. <code>count: 1</code> yazar — 3
+        deneme yapildigi halde, cunku o denemeler uygulamanin icindeydi, broker onlari hic
+        gormedi.
+      </>,
+      <>
+        Replay: Mailpit'i geri ac, <code>garbage-queue</code>'daki mesajin payload'ini kopyala,{" "}
+        <code>user.registered</code> exchange'ine <code>kullanici kaydoldu</code> routing
+        key'i ve <code>__TypeId__: mailUsername</code> header'i ile yeniden yayinla. Mail
+        gelir. Bunu <b>elle</b> yapiyorsun cunku "sorun duzeldi mi" sorusunu kod bilemez.
       </>,
     ],
   },
