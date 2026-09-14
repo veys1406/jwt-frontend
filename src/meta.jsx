@@ -56,8 +56,10 @@ export const META = {
         bitince <code>AuthService</code> <code>user.registered</code> exchange'ine bir event
         birakip <b>beklemeden</b> doner. Kuyrugun oteki ucunda <code>MailConsumer</code> o
         mesaji alip <code>JavaMailSender</code> ile gercek bir mail yolluyor — sahte SMTP
-        sunucusu <b>Mailpit</b>'e. Gonderim patlarsa mesaj kaybolmuyor: 3 deneme sonunda{" "}
-        <code>garbage-queue</code>'ya tasiniyor.
+        sunucusu <b>Mailpit</b>'e. Gonderim patlarsa mesaj kaybolmuyor: 4 deneme sonunda{" "}
+        <code>garbage-queue</code>'ya tasiniyor. Mesajin ustunde artik bir de{" "}
+        <code>message_id</code> var: ayni mesaj ikinci kez teslim edilirse ikinci mail
+        gitmiyor.
       </>
     ),
     notes: [
@@ -117,8 +119,9 @@ export const META = {
             <b>Unacked</b> durumunda kalir. Varsayilan davranis onu kuyruga geri koymak, ki
             bu tek basina <b>sonsuz dongu</b> demek: patla, geri koy, tekrar dene.
             <br />
-            Bizde zincir su: 5 saniye arayla <b>3 deneme</b> (uygulamanin icinde, mesaj
-            kuyruga hic donmeden) → haklar bitince mesaj reddedilir → <code>mail-queue</code>
+            Bizde zincir su: 5 saniye arayla <b>4 deneme</b> — 1 ilk deneme + 3 tekrar,
+            toplam ~15 sn (uygulamanin icinde, mesaj kuyruga hic donmeden) → haklar
+            bitince mesaj reddedilir → <code>mail-queue</code>
             'nun <code>x-dead-letter-exchange</code> ayari devreye girer →{" "}
             <code>message.rejected</code> exchange'i → <code>garbage-queue</code>. Orada
             kimse tuketmez, mesaj incelenmek uzere <b>durur</b>.
@@ -136,14 +139,115 @@ export const META = {
             <br />
             Bu yuzden kalici hata iki yerde yakalaniyor: <code>@Email</code> ile{" "}
             <b>kapida</b> (istek 400 doner, kuyruga mesaj hic girmez) ve{" "}
-            <code>MailConsumer</code>'da ikinci bir kontrolle. Hata ne kadar erken
+            <code>MailConsumer</code>'da ikinci bir kontrolle — adres <code>null</code> ya da
+            icinde <code>@</code> yoksa <code>AmqpRejectAndDontRequeueException</code>, yani
+            hic tekrar denenmeden dogruca <code>garbage-queue</code>. Hata ne kadar erken
             yakalanirsa o kadar ucuz — kapida yakalarsan kullaniciya soyleyebilirsin,
             kuyrukta yakalarsan soyleyemezsin.
           </>
         ),
       },
+      {
+        title: "Mail gitti ama ack gitmedi — ikinci mail",
+        body: (
+          <>
+            <code>javaMailSender.send</code> donmesiyle RabbitMQ'ya <b>ack</b> gitmesi ayni an
+            degil: ack, consumer metodu bittiginde gider. Uygulama tam o araliktayken olurse
+            (<code>docker compose kill app</code>) broker mailin gittigini bilmez — gordugu tek
+            sey "teslim ettim, onay gelmedi". Mesaji <b>Ready</b>'e geri koyar, app kalkinca
+            tekrar teslim eder ve <code>send</code> ikinci kez calisir.
+            <br />
+            Bu RabbitMQ'nun bozuklugu degil, verdigi sozun ta kendisi:{" "}
+            <b>at-least-once</b> teslimat. "En az bir kez" garantisi, "tam bir kez" degil.
+            Tekrari engellemek consumer'in isi.
+          </>
+        ),
+      },
+      {
+        title: "Mesajin kimligi — message_id + Redis",
+        body: (
+          <>
+            Tekrari tanimak icin mesajin bir <b>kimligi</b> olmali. <code>redelivered</code>{" "}
+            ise yaramaz ("bunu daha once birine verdim" der, "is yapildi" demez);{" "}
+            <code>message_id</code> ise varsayilan olarak <b>bos</b> gelir — ne RabbitMQ ne{" "}
+            <code>RabbitTemplate</code> dolduruyor.
+            <br />
+            Kimligi <b>publisher</b> uretiyor: <code>AuthService</code> gonderirken{" "}
+            <code>message_id</code>'ye bir <code>UUID</code> yaziyor. Kural su: kimlik, ilk
+            kopyanin dogabilecegi noktadan <i>once</i> uretilmeli ki butun kopyalar ayni
+            kimligi miras alsin. Consumer uretseydi her teslimat yeni kimlik alirdi, hicbir
+            tekrar yakalanmazdi.
+            <br />
+            <code>MailConsumer</code> islenen kimlikleri <b>Redis</b>'te 1 gun TTL ile
+            tutuyor. Redis secildi cunku onemli olan "RAM mi disk mi" degil, kaydin{" "}
+            <b>uygulamanin process'inin disinda</b> yasamasi — <code>kill</code> uygulamayi
+            olduruyor, Redis konteynerine dokunmuyor.
+          </>
+        ),
+      },
+      {
+        title: "Once gonder sonra isaretle — bir is karari",
+        body: (
+          <>
+            Sira iki turlu kurulabilir: <b>once isi yap sonra isaretle</b> (risk: is iki kez
+            yapilir — at-least-once) ya da <b>once isaretle sonra isi yap</b> (risk: is hic
+            yapilmaz — at-most-once). Hos geldin maili icin at-most-once denendi ve geri
+            alindi: Mailpit kapaliyken Redis'e "islendi" yazildi, <code>send</code> patladi,
+            ikinci denemede kontrol "zaten islendi" deyip <code>return</code> etti — mail hic
+            gitmedi, <code>garbage-queue</code>'da da kayit olmadi. <b>Gecici</b> bir hata,{" "}
+            <b>sessiz</b> ve kalici bir kayba donustu.
+            <br />
+            Pencere tamamen kapanmiyor: mail SMTP sunucusunda, isaret Redis'te — iki ayri
+            sistemi tek atomik adimda guncellemenin yolu yok (<b>dual-write</b>). Kucultulur,
+            sifirlanmaz. Sorunun cevabi teknik degil: karttan para cekiliyorsa cevap tersine
+            donerdi.
+          </>
+        ),
+      },
+      {
+        title: "Kimliksiz mesaj ne oluyor",
+        body: (
+          <>
+            Management UI'dan elle publish edilen mesajda <code>message_id</code> yok —
+            replay yolu tam olarak bu. <code>@Header</code> varsayilan olarak{" "}
+            <b>zorunlu</b> oldugu icin bu mesajlar bir sure metoda hic giremeden 4 deneme
+            yiyip <code>garbage-queue</code>'ya dusuyordu (hata parametre cozumlemede,
+            stack trace'te <code>MailConsumer.print</code> karesi bile yok).
+            <br />
+            Secilen davranis: <code>required = false</code> → kimlik yoksa idempotency
+            kontrolu ve isaretleme <b>atlanir</b>, mail yine gider, ama log'a{" "}
+            <b>WARN</b> basilir. Gerekce: kimliksiz mesaj bir istisna, ama korumanin
+            kaybolmasi sessiz olmamali.
+          </>
+        ),
+      },
     ],
-    gaps: [],
+    gaps: [
+      {
+        code: "M4-f",
+        body: (
+          <>
+            Sagdaki "4 deneme" sayisi bir ayardan degil, bir <b>varsayilandan</b> geliyor:{" "}
+            <code>spring.rabbitmq.listener.simple.retry.max-attempts</code> Boot 4.0'dan beri
+            okunmuyor (hata da uyari da vermeden). Calisan{" "}
+            <code>max-retries</code> varsayilani 3 → 1 + 3 = 4 deneme. Dogru ayar henuz
+            yazilmadi.
+          </>
+        ),
+      },
+      {
+        code: "M5-a",
+        body: (
+          <>
+            Idempotency kontrolu <b>atomik degil</b>: "once Redis'e sor, sonra isaretle" iki
+            ayri adim. Bugun tehlike yok cunku{" "}
+            <code>spring.rabbitmq.listener.simple.concurrency</code> varsayilani 1 — tek
+            thread sirayla isliyor. <code>concurrency</code> artarsa ya da app olceklenirse
+            iki thread ayni anda "Redis bos" gorebilir. Cozum adayi Redis <code>SET NX</code>.
+          </>
+        ),
+      },
+    ],
     tryouts: [
       <>
         Ayni kullanici adiyla iki kez kayit ol → <b>409</b>,{" "}
@@ -181,21 +285,45 @@ export const META = {
       <>
         Ayni deneyin devami: Management UI'da <code>mail-queue</code> satirini izle. Mesaj{" "}
         <b>Ready</b>'de degil <b>Unacked</b>'da bekler (teslim edildi ama onaylanmadi).
-        10 saniye sonra <code>garbage-queue</code>'da <b>Ready 1</b> olur. App loglarinda o
-        an <code>OwnRecoverer</code>'in ERROR satiri gorunur.
+        ~15 saniye sonra <code>garbage-queue</code>'da <b>Ready 1</b> olur. App loglarinda o
+        an <code>OwnRecoverer</code>'in ERROR satiri gorunur — <code>Caused by</code> zinciri
+        korundugu icin altinda asil kok sebep (baglanti hatasi) da yazar.
       </>,
       <>
         <code>garbage-queue</code> → Get messages → mesajin header'larindaki{" "}
         <code>x-death</code>'e bak: <code>exchange</code>, <code>queue</code>,{" "}
-        <code>reason</code>, <code>routing-keys</code>. <code>count: 1</code> yazar — 3
+        <code>reason</code>, <code>routing-keys</code>. <code>count: 1</code> yazar — 4
         deneme yapildigi halde, cunku o denemeler uygulamanin icindeydi, broker onlari hic
         gormedi.
+      </>,
+      <>
+        <b>Idempotency deneyi.</b> Consumer'da <code>send</code>'den sonra gecici bir{" "}
+        <code>Thread.sleep(10000)</code> duruyor — ack'i 10 saniye geciktirip pencereyi elle
+        genisletmek icin. Kayit ol, 10 sn dolmadan <code>docker compose kill app</code>{" "}
+        (<code>stop</code> degil: <code>stop</code> kibar kapatma, <code>kill</code> elektrik
+        kesilmesi). Mailpit'te <b>1 mail</b>, <code>mail-queue</code>'da app kapaliyken{" "}
+        <b>Ready 1</b>. Sonra <code>docker compose start app</code> → mesaj tekrar teslim
+        edilir ama Mailpit'te <b>ikinci mail yok</b>; log'da{" "}
+        <code>Bu mesaj zaten gonderildi → &lt;uuid&gt;</code>.
+      </>,
+      <>
+        Ayni deneyi Redis'in gozunden izle: <code>docker exec -it &lt;redis&gt; redis-cli</code>{" "}
+        → <code>KEYS *</code>. Mail gittikten sonra UUID'li anahtar orada, degeri{" "}
+        <code>mailSent</code>, <code>TTL &lt;uuid&gt;</code> ~86400. Bu anahtar app oldugunde
+        de duruyor — koruma zaten bu yuzden Redis'te.
       </>,
       <>
         Replay: Mailpit'i geri ac, <code>garbage-queue</code>'daki mesajin payload'ini kopyala,{" "}
         <code>user.registered</code> exchange'ine <code>kullanici kaydoldu</code> routing
         key'i ve <code>__TypeId__: mailUsername</code> header'i ile yeniden yayinla. Mail
         gelir. Bunu <b>elle</b> yapiyorsun cunku "sorun duzeldi mi" sorusunu kod bilemez.
+      </>,
+      <>
+        Replay'in yan etkisi: elle publish ettigin mesajda <code>message_id</code> yok, o
+        yuzden log'da <code>Message id bos!</code> WARN'i cikar ve Redis kontrolu yapilmaz.
+        Ayni payload'i <b>iki kez</b> yayinla → <b>iki mail</b> gelir. Kimlik yoksa koruma
+        da yok; ust panelde <code>Message ID</code> alanini doldurup tekrarla → ikincisi
+        atlanir.
       </>,
     ],
   },

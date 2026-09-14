@@ -58,10 +58,18 @@ export default function Register({ run, go }) {
           ucundan gitti; tarayici ile mail arasinda hicbir bag yok.
         </p>
         <p className="page-sub">
-          Peki mail gidemezse? Consumer 5 saniye arayla <b>3 kez</b> deniyor; ucu de
-          basarisiz olursa mesaj silinmiyor, <code>garbage-queue</code> adli ayri bir
-          kuyruga tasiniyor ve orada bekliyor. Yani "mail gitmedi" ile "mail kayboldu"
-          ayni sey degil — sen bu ekrani gorurken mesajin akibeti hala belirsiz olabilir.
+          Peki mail gidemezse? Consumer 5 saniye arayla <b>4 kez</b> deniyor (1 ilk deneme +
+          3 tekrar); dordu de basarisiz olursa mesaj silinmiyor, <code>garbage-queue</code>{" "}
+          adli ayri bir kuyruga tasiniyor ve orada bekliyor. Yani "mail gitmedi" ile "mail
+          kayboldu" ayni sey degil — sen bu ekrani gorurken mesajin akibeti hala belirsiz
+          olabilir.
+        </p>
+        <p className="page-sub">
+          Ters tarafi da var: mail gidip de uygulama onay (<b>ack</b>) vermeden coktuyse
+          RabbitMQ ayni mesaji tekrar teslim eder — verdigi soz "en az bir kez". O yuzden bu
+          kayit kuyruga birakilirken mesaja bir <code>message_id</code> (UUID) kondu; consumer
+          gonderdigi kimlikleri Redis'te 1 gun tutuyor ve ayni kimlik ikinci kez gelirse maili
+          tekrar gondermiyor. Ikinci bir hos geldin maili almamanin sebebi bu.
         </p>
         <button className="btn primary block" onClick={() => go("login")}>
           Girise don
